@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: allougoum-tata
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
+      - key: DB_PATH
+        value: /data/tata.db
+      - key: SESSION_SECRET
+        generateValue: true
+    disk:
+      name: tata-data
+      mountPath: /data
+      sizeGB: 1

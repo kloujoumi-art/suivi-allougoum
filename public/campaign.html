@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام إدارة الحملة - جماعة الوكوم</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+[v-cloak]{display:none}
+.pos-btn{transition:all .15s ease}
+.pos-btn:active{transform:scale(.95)}
+</style>
+</head>
+<body class="bg-gray-100 min-h-screen" dir="rtl">
+<div id="app" v-cloak>
+
+  <!-- HEADER -->
+  <header class="bg-gradient-to-l from-blue-900 to-blue-700 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-3">
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold">🗳️ إدارة الحملة الانتخابية — جماعة الوكوم</h1>
+          <p class="text-blue-200 text-xs mt-0.5">الدائرة 1 — إجمالي: {{voters.length}} ناخب</p>
+        </div>
+        <div class="flex gap-2 text-center text-xs md:text-sm flex-wrap justify-center">
+          <div class="bg-green-500 bg-opacity-80 rounded-lg px-3 py-2 min-w-[60px]">
+            <div class="font-bold text-lg leading-none">{{stats.maana}}</div>
+            <div class="mt-0.5">معنا ✅</div>
+          </div>
+          <div class="bg-yellow-500 bg-opacity-80 rounded-lg px-3 py-2 min-w-[60px]">
+            <div class="font-bold text-lg leading-none">{{stats.mutaraddid}}</div>
+            <div class="mt-0.5">متردد ⚠️</div>
+          </div>
+          <div class="bg-red-500 bg-opacity-80 rounded-lg px-3 py-2 min-w-[60px]">
+            <div class="font-bold text-lg leading-none">{{stats.diddana}}</div>
+            <div class="mt-0.5">ضدنا ❌</div>
+          </div>
+          <div class="bg-gray-500 bg-opacity-80 rounded-lg px-3 py-2 min-w-[60px]">
+            <div class="font-bold text-lg leading-none">{{stats.notEval}}</div>
+            <div class="mt-0.5">لم يُقيَّم</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV TABS -->
+  <nav class="bg-white border-b shadow-sm sticky top-0 z-20">
+    <div class="max-w-7xl mx-auto px-4 flex gap-1">
+      <button @click="tab='dash'" :class="tabClass('dash')">📊 لوحة التحكم</button>
+      <button @click="tab='list'" :class="tabClass('list')">👥 قائمة الناخبين</button>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-3 py-5">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div v-if="tab==='dash'">
+
+      <!-- Summary cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        <div class="bg-white rounded-xl shadow p-4 border-r-4 border-blue-500">
+          <div class="text-3xl font-bold text-blue-600">{{voters.length}}</div>
+          <div class="text-gray-500 text-sm">إجمالي الناخبين</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 border-r-4 border-green-500">
+          <div class="text-3xl font-bold text-green-600">{{stats.maana}}</div>
+          <div class="text-gray-500 text-sm">معنا 100%</div>
+          <div class="text-green-400 text-xs">{{stats.pMaana}}% من المجموع</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 border-r-4 border-yellow-400">
+          <div class="text-3xl font-bold text-yellow-500">{{stats.mutaraddid}}</div>
+          <div class="text-gray-500 text-sm">متردد 50%</div>
+          <div class="text-yellow-400 text-xs">{{stats.pMutaraddid}}% من المجموع</div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 border-r-4 border-red-500">
+          <div class="text-3xl font-bold text-red-600">{{stats.diddana}}</div>
+          <div class="text-gray-500 text-sm">ضدنا 0%</div>
+          <div class="text-red-400 text-xs">{{stats.pDiddana}}% من المجموع</div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="bg-white rounded-xl shadow p-4 mb-5">
+        <div class="flex justify-between text-xs text-gray-500 mb-1">
+          <span>نسبة التقييم العام ({{100 - stats.pNotEval}}% مقيَّم)</span>
+          <span>{{stats.notEval}} لم يُقيَّم</span>
+        </div>
+        <div class="flex h-7 rounded-full overflow-hidden bg-gray-100">
+          <div v-if="stats.maana" :style="{width:stats.pMaana+'%'}" class="bg-green-500 flex items-center justify-center text-white text-xs font-bold">{{stats.pMaana}}%</div>
+          <div v-if="stats.mutaraddid" :style="{width:stats.pMutaraddid+'%'}" class="bg-yellow-400 flex items-center justify-center text-white text-xs font-bold">{{stats.pMutaraddid}}%</div>
+          <div v-if="stats.diddana" :style="{width:stats.pDiddana+'%'}" class="bg-red-500 flex items-center justify-center text-white text-xs font-bold">{{stats.pDiddana}}%</div>
+          <div v-if="stats.notEval" :style="{width:stats.pNotEval+'%'}" class="bg-gray-200"></div>
+        </div>
+        <div class="flex gap-4 mt-2 text-xs text-gray-500">
+          <span><span class="inline-block w-3 h-3 rounded-full bg-green-500 ml-1"></span>معنا</span>
+          <span><span class="inline-block w-3 h-3 rounded-full bg-yellow-400 ml-1"></span>متردد</span>
+          <span><span class="inline-block w-3 h-3 rounded-full bg-red-500 ml-1"></span>ضدنا</span>
+          <span><span class="inline-block w-3 h-3 rounded-full bg-gray-200 ml-1"></span>لم يقيَّم</span>
+        </div>
+      </div>
+
+      <!-- Douar stats -->
+      <div class="bg-white rounded-xl shadow p-4 mb-5">
+        <h3 class="font-bold text-gray-700 mb-4 text-base">📍 إحصائيات حسب الدوار</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 text-gray-600">
+                <th class="text-right px-3 py-2 font-semibold">الدوار</th>
+                <th class="text-center px-3 py-2 font-semibold">الإجمالي</th>
+                <th class="text-center px-3 py-2 font-semibold text-green-600">معنا ✅</th>
+                <th class="text-center px-3 py-2 font-semibold text-yellow-500">متردد ⚠️</th>
+                <th class="text-center px-3 py-2 font-semibold text-red-600">ضدنا ❌</th>
+                <th class="text-center px-3 py-2 font-semibold text-gray-400">لم يقيَّم</th>
+                <th class="px-3 py-2 font-semibold text-gray-500 hidden md:table-cell">التقدم</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="d in douarStats" :key="d.name" class="border-t hover:bg-gray-50">
+                <td class="px-3 py-2 font-medium text-gray-800">{{d.name}}</td>
+                <td class="text-center px-3 py-2 font-bold text-blue-600">{{d.total}}</td>
+                <td class="text-center px-3 py-2"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold">{{d.maana}}</span></td>
+                <td class="text-center px-3 py-2"><span class="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-semibold">{{d.mutaraddid}}</span></td>
+                <td class="text-center px-3 py-2"><span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold">{{d.diddana}}</span></td>
+                <td class="text-center px-3 py-2 text-gray-400 text-xs">{{d.notEval}}</td>
+                <td class="px-3 py-2 hidden md:table-cell">
+                  <div class="flex h-2.5 rounded-full overflow-hidden bg-gray-100 w-28">
+                    <div :style="{width:(d.maana/d.total*100)+'%'}" class="bg-green-500"></div>
+                    <div :style="{width:(d.mutaraddid/d.total*100)+'%'}" class="bg-yellow-400"></div>
+                    <div :style="{width:(d.diddana/d.total*100)+'%'}" class="bg-red-500"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Treatment stats -->
+      <div class="bg-white rounded-xl shadow p-4">
+        <h3 class="font-bold text-gray-700 mb-4 text-base">🔧 طرق المعالجة</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="border rounded-lg p-4 text-center">
+            <div class="text-3xl font-bold text-blue-600">{{treatStats[0].count}}</div>
+            <div class="text-sm text-gray-600 mt-1">زيارة المرشح مباشرة</div>
+          </div>
+          <div class="border rounded-lg p-4 text-center">
+            <div class="text-3xl font-bold text-purple-600">{{treatStats[1].count}}</div>
+            <div class="text-sm text-gray-600 mt-1">إرسال شخص يعرفه جيداً</div>
+          </div>
+          <div class="border rounded-lg p-4 text-center">
+            <div class="text-3xl font-bold text-indigo-600">{{treatStats[2].count}}</div>
+            <div class="text-sm text-gray-600 mt-1">زيارة مع نين الحسين وعبد اللطيف أكناو</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LIST ===== -->
+    <div v-if="tab==='list'">
+
+      <!-- Filters -->
+      <div class="bg-white rounded-xl shadow p-3 mb-4">
+        <div class="flex flex-col md:flex-row gap-2">
+          <input v-model="search" type="text" placeholder="🔍 البحث بالاسم أو اللقب..."
+            class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+          <select v-model="fDouar" class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <option value="">📍 كل الدواوير</option>
+            <option v-for="d in douarList" :key="d" :value="d">{{d}}</option>
+          </select>
+          <select v-model="fPos" class="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <option value="">🎯 كل المواقف</option>
+            <option value="maana">✅ معنا</option>
+            <option value="mutaraddid">⚠️ متردد</option>
+            <option value="diddana">❌ ضدنا</option>
+            <option value="none">— لم يقيَّم</option>
+          </select>
+          <button @click="resetF" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm whitespace-nowrap">↺ إعادة ضبط</button>
+        </div>
+        <div class="mt-2 text-xs text-gray-500">{{filtered.length}} ناخب معروض من أصل {{voters.length}}</div>
+      </div>
+
+      <!-- Desktop table -->
+      <div class="hidden md:block bg-white rounded-xl shadow overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr class="text-gray-600">
+              <th class="text-center px-2 py-3 w-10 font-medium">#</th>
+              <th class="text-right px-3 py-3 font-semibold">الاسم الكامل</th>
+              <th class="text-right px-3 py-3 font-semibold">الدوار</th>
+              <th class="text-center px-3 py-3 font-semibold">الموقف</th>
+              <th class="text-right px-3 py-3 font-semibold">طريقة المعالجة</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="v in paginated" :key="v.id" :class="['border-t', rowBg(v.position)]">
+              <td class="text-center px-2 py-2 text-gray-400 text-xs">{{v.id}}</td>
+              <td class="px-3 py-2 font-medium text-gray-800">{{v.fn}} {{v.ln}}</td>
+              <td class="px-3 py-2 text-gray-500 text-xs">{{v.douar}}</td>
+              <td class="px-3 py-2">
+                <div class="flex gap-1 justify-center">
+                  <button @click="setPos(v.id,'maana')" :class="['pos-btn px-2 py-1 rounded text-xs font-medium border',v.position==='maana'?'bg-green-500 text-white border-green-500':'bg-white text-green-600 border-green-300 hover:bg-green-50']">✅ معنا</button>
+                  <button @click="setPos(v.id,'mutaraddid')" :class="['pos-btn px-2 py-1 rounded text-xs font-medium border',v.position==='mutaraddid'?'bg-yellow-400 text-white border-yellow-400':'bg-white text-yellow-600 border-yellow-300 hover:bg-yellow-50']">⚠️ متردد</button>
+                  <button @click="setPos(v.id,'diddana')" :class="['pos-btn px-2 py-1 rounded text-xs font-medium border',v.position==='diddana'?'bg-red-500 text-white border-red-500':'bg-white text-red-600 border-red-300 hover:bg-red-50']">❌ ضدنا</button>
+                </div>
+              </td>
+              <td class="px-3 py-2">
+                <select v-model="v.treatment" @change="save" class="text-xs border rounded px-2 py-1 w-full max-w-xs focus:outline-none focus:ring-1 focus:ring-blue-300">
+                  <option value="">— اختر —</option>
+                  <option value="v1">زيارة المرشح مباشرة</option>
+                  <option value="v2">إرسال شخص يعرفه جيداً</option>
+                  <option value="v3">زيارة مع نين الحسين وعبد اللطيف أكناو</option>
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="md:hidden space-y-2">
+        <div v-for="v in paginated" :key="v.id" :class="['bg-white rounded-lg shadow p-3 border-r-4', cardBorder(v.position)]">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <span class="text-xs text-gray-400">#{{v.id}}</span>
+              <div class="font-semibold text-sm text-gray-800">{{v.fn}} {{v.ln}}</div>
+              <div class="text-xs text-gray-400">{{v.douar}}</div>
+            </div>
+            <span v-if="v.position" :class="['text-xs px-2 py-1 rounded-full font-semibold', badgeCls(v.position)]">{{posLabel(v.position)}}</span>
+          </div>
+          <div class="flex gap-1 mb-2">
+            <button @click="setPos(v.id,'maana')" :class="['flex-1 py-1.5 rounded text-xs font-medium',v.position==='maana'?'bg-green-500 text-white':'bg-green-50 text-green-700 border border-green-200']">✅ معنا</button>
+            <button @click="setPos(v.id,'mutaraddid')" :class="['flex-1 py-1.5 rounded text-xs font-medium',v.position==='mutaraddid'?'bg-yellow-400 text-white':'bg-yellow-50 text-yellow-700 border border-yellow-200']">⚠️ متردد</button>
+            <button @click="setPos(v.id,'diddana')" :class="['flex-1 py-1.5 rounded text-xs font-medium',v.position==='diddana'?'bg-red-500 text-white':'bg-red-50 text-red-700 border border-red-200']">❌ ضدنا</button>
+          </div>
+          <select v-model="v.treatment" @change="save" class="w-full text-xs border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-300">
+            <option value="">— طريقة المعالجة —</option>
+            <option value="v1">زيارة المرشح مباشرة</option>
+            <option value="v2">إرسال شخص يعرفه جيداً</option>
+            <option value="v3">زيارة مع نين الحسين وعبد اللطيف أكناو</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex justify-center items-center gap-3 mt-4">
+        <button @click="page=Math.max(1,page-1)" :disabled="page===1" class="px-4 py-1.5 rounded border text-sm disabled:opacity-40 hover:bg-gray-100">◀ السابق</button>
+        <span class="text-sm text-gray-600 font-medium">{{page}} / {{totalPages}}</span>
+        <button @click="page=Math.min(totalPages,page+1)" :disabled="page===totalPages" class="px-4 py-1.5 rounded border text-sm disabled:opacity-40 hover:bg-gray-100">التالي ▶</button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="bg-gray-800 text-gray-400 text-center py-2 text-xs mt-6">
+    نظام إدارة الحملة الانتخابية — جماعة الوكوم — البيانات محفوظة محلياً على الجهاز
+  </footer>
+</div>
+
+<script>
+const {createApp,ref,computed,watch}=Vue;
+
+const D='دوار الوكوم',M='مركز الوكوم',X='خارج المغرب',A='دوار أسملیل',S='الوكوم الشرقية',T='تاطا';
+
+const RAW=[
+[1,'افضیلة','بوخو',T],[2,'محمد','بیضار',D],[3,'امینة','واحي',D],[4,'جمیلة','لدومي',D],
+[5,'رقیة','فرید',D],[6,'فاضمة','موكني',D],[7,'عبدالكریم','بیضار',D],[8,'محمد','لكومي',D],
+[9,'لحسن','موكني',D],[10,'كلثومة','بیا',D],[11,'خدیجة','أسورى',D],[12,'عبد العزیز','موكني',D],
+[13,'عبد الله','امغارن',D],[14,'فاضمة','اجان',D],[15,'لحسن','بن خالي',D],[16,'فاطمة','امداح',D],
+[17,'جمعة','امزیل',D],[18,'فاضمة','امداح',D],[19,'زینبة','امغرن',D],[20,'نزهة','ایت سعید',D],
+[21,'فاطمة','ایت القائد',D],[22,'صفیة','كینو',D],[23,'خدیجة','عاقل',D],[24,'محمد بن حمى ابرایم','امزیل',D],
+[25,'الزهرة','صابر',D],[26,'خدیجة','كزاي',D],[27,'فضیلة','ایت الحاج علي',D],[28,'الزهرة','بوحمید',D],
+[29,'فاضمة','امغارن',D],[30,'فاضمة بنت محمد','حسنات',D],[31,'زینة بنت احمد','احمودو',D],[32,'خدیجة','ایت احمد',D],
+[33,'فاضمة','جواب',D],[34,'رشیدة','القرشي',D],[35,'محمد بن علي بن المداني','بعمي',D],[36,'فضمة','ایت بالحسن',D],
+[37,'خدیجة','ایت بالحسن',D],[38,'زینة','القرشي',D],[39,'فاطمة','موكني',D],[40,'خدیجة','القرشي',D],
+[41,'عائشة','ایت بالحسن',D],[42,'فاطمة','القرشي',D],[43,'رحمة','تاموشي',D],[44,'فاضمة','مخلص',D],
+[45,'املعید','بن خالي',D],[46,'ابراهیم','الشافعي',D],[47,'فاضمة','لجومي',D],[48,'جمعة','ابرشیح',D],
+[49,'رقیة','ناصري',D],[50,'فاضمة','منیسي',D],[51,'فضیلة','الصنهاجي',D],[52,'فاطمة','ایت حدوش',D],
+[53,'فاطمة','بعفاس',D],[54,'كبیرة','بوعلا',D],[55,'مامة','واحي',D],[56,'زینبة','ایت عمر',D],
+[57,'الحسن','ازناك',D],[58,'محمد','المودن',D],[59,'فاضمة','الحیان',D],[60,'احمد','الحدان',D],
+[61,'ابراهیم','امغارن',D],[62,'محمد','بیضار',D],[63,'فاطمة','امروك',D],[64,'الحسن','بن خالي',D],
+[65,'محمد','ایت احمد',M],[66,'فاطمة','حسنات',D],[67,'فاضمة','بن طالب',D],[68,'لحسن','امزیل',D],
+[69,'لحسن','بن الطالب',D],[70,'فاطمة','امغارن',D],[71,'الزهرة','بیقبان',D],[72,'زینب','سوسي',D],
+[73,'السعدیة','لعریشي',D],[74,'فطمة','ایت رحو',D],[75,'عائشة','ایت القائد',D],[76,'فاطمة','مكراز',D],
+[77,'فاطمة','الغلیمي',D],[78,'خدیجة','مزیان',D],[79,'حسن بن محمد بن محمد','امزیلان',D],[80,'حلیمة','مكني',D],
+[81,'سعیدة','بعفاس',D],[82,'حفیظة','ایت احي',D],[83,'رقیة','ایت بوجمعة',D],[84,'عائشة','حسنات',D],
+[85,'فاطمة','الشافعي',D],[86,'فاطمة','موح',D],[87,'فاطمة','حنیني',D],[88,'زاینة','فرید',D],
+[89,'فاضمة','المنصوري',D],[90,'خدیجة','الباش',D],[91,'جمیعة','باش',D],[92,'ام العید','مكني',D],
+[93,'ربیعة','الشرحیلي',D],[94,'الحسین','حسنات',D],[95,'فاضمة','الطالبي',D],[96,'نعیمة','ایت الفاطمي',D],
+[97,'الحسن','بعفاس',D],[98,'فاطمة الزهرة','منیسي',D],[99,'فاطمة','ایت ناصر',D],[100,'فضمة','ایت ناصر',D],
+[101,'جواد','منیسي',D],[102,'ابراهیم','بیخبان',D],[103,'فاطمة','كاینو',D],[104,'كبیرة','موح',D],
+[105,'امباركة','بخو',D],[106,'فاضمة','ازنیر',D],[107,'فاضمة','بعمي',D],[108,'عائشة','ایت حمد',D],
+[109,'عمر','القرشي',D],[110,'خدیجة','اختار',D],[111,'جمال','ایت زلیم',X],[112,'محمد','كوفي',X],
+[113,'عبد الله','ابرشیح',D],[114,'عبدالحمید','موكني',D],[115,'عائشة','ایت بوجمعة',D],[116,'عائشة','القرشي',D],
+[117,'فضیلة بنت عبدالله','باش',D],[118,'فضیلة','بوهدید',D],[119,'فضیلة','ایت بها',D],[120,'الزهرة','الشافعي',D],
+[121,'فاطمة','ایت الحاج حمد',D],[122,'ربیعة','كاني',D],[123,'امینة','ایت احمد',D],[124,'فتیحة','بن خالي',D],
+[125,'عائشة','بعفاس',D],[126,'لطیفة','حسنات',D],[127,'صفیة بنت لحسن','بعمي',D],[128,'السعدیة بن علي','بعمي',D],
+[129,'یاسمة','بعمي',D],[130,'جمعة','لعكیدي',D],[131,'كلثوم','الشرحبیلي',D],[132,'عائشة','مكني',D],
+[133,'عبد العزیز','الطالبي',D],[134,'عائشة','تنوت',D],[135,'اسماعیل','بن الطالب',D],[136,'ودیع','بو العوان',D],
+[137,'فاضمة','بوكرع',D],[138,'ایجة','بن خالي',D],[139,'محمد','الباش',D],[140,'حمید','امغارن',D],
+[141,'بدیعة','ایت سعید',D],[142,'محمد','اكباش',D],[143,'عبد الله','اتاي',D],[144,'احمد','السملالي',D],
+[145,'حسن','امغارن',D],[146,'حنان','مكني',D],[147,'ایدار','ازنیر',D],[148,'الحسن','واحي',D],
+[149,'احمد بن الحسین بن المداني','بعمي',D],[150,'محمد','ایت الحاج احمد',D],[151,'احمد','العلاوي',M],[152,'ابراهیم','ایت سعید',D],
+[153,'كلثومة','ایت بلقاس',D],[154,'عائشة','بواشتراط',D],[155,'محمد','موح',D],[156,'ابراهیم','ایت عمر',D],
+[157,'عبدالواحد','واحي',D],[158,'الحسن','امغارن',D],[159,'عبد الله','امرووك',D],[160,'الحسن','اسعید',D],
+[161,'حسن','بوشطرات',D],[162,'ع الرحمان','ایت السعید',D],[163,'ع الرحمان','فسكا',D],[164,'زینبة','بوالعوان',D],
+[165,'حسن','منیسي',D],[166,'عبد الله','ایت بالحسن',D],[167,'فضمة','السملالي',D],[168,'سناء','مكراز',D],
+[169,'صالح','بن الطالب',D],[170,'اصفیة','بعمي',D],[171,'عنایة','بعمي',D],[172,'احمد','واحي',D],
+[173,'فاطمة','ابا',D],[174,'عائشة','صابري',D],[175,'تیدار بنت ع الله','باري',D],[176,'حسن','ایت الحاج احمد',D],
+[177,'فاضمة','ازناك',D],[178,'فضمة','موح',D],[179,'حمزة','الزیتوني',D],[180,'الزهرة','امروك',D],
+[181,'الزهرة','اللجومي',D],[182,'كبیرة','موكني',D],[183,'محمد','المنصوري',D],[184,'ابراهیم','امغارن',D],
+[185,'ع الرحمان بن محمد','ایت بالحسن',D],[186,'محمد','ایت بالحسن',D],[187,'محمد','بوعلا',D],[188,'نعیمة','بیقبان',D],
+[189,'عبد الرحمان بن علي','بعمي',D],[190,'اسماعیل','الباش',D],[191,'عنایة','امغارن',D],[192,'رقیة','ایت بلقاس',D],
+[193,'لحسن','اللجومي',D],[194,'صفیة','مكني',D],[195,'رقیة','حنیني',D],[196,'فاضمة','واحي',D],
+[197,'رقیة','مشواض',D],[198,'عبد الرحمان','دامو',D],[199,'الزهرة','ایت علي',A],[200,'عبد الرحیم','بلى',D],
+[201,'زینبة','بن لفقیه',D],[202,'بشرى','ازنیر',D],[203,'ربیعة','الطالبي',D],[204,'لحسن','اتاي',D],
+[205,'میلود','مكني',D],[206,'ابراهیم','فسكا',D],[207,'محمد','بن خالي',D],[208,'صلاح الدین','بن خالي',D],
+[209,'الحسین','ایت احي',D],[210,'ایوب','السملالي',D],[211,'فاطمة','سملالي',D],[212,'ابراهیم','عكي',D],
+[213,'عبد الرحمان','ایت احمد',D],[214,'عبد الرحیم','ایت ایجة',D],[215,'ابتسام','بیضار',D],[216,'نجاة','الزكاني',D],
+[217,'فتیحة','ایت یحي',D],[218,'عائشة','سملالي',D],[219,'سامیة','القرشي',D],[220,'رقیة','كودیح',D],
+[221,'حدهم','بن العكید',D],[222,'ابوبكر','مكني',D],[223,'محمد','كوفي',X],[224,'محمد','اتاي',D],
+[225,'عبد الرزاق','ایت زلیم',D],[226,'نصیرة','بنخالي',D],[227,'الحسین','بن الطالب',D],[228,'عبد الرحمان','السملالي',D],
+[229,'نهیلة','واحي',D],[230,'نعمة','ابرشیح',D],[231,'عتیقة','الشافعي',D],[232,'عبد الرزاق','الباش',D],
+[233,'محمد','الزكاني',D],[234,'عثمان','تاموشي',D],[235,'الحسن','بواشطراط',D],[236,'سمیرة','ایت احي',D],
+[237,'حبیبة','المنصور',D],[238,'عبد العالي','بن خالي',D],[239,'حمزة','ازنیر',D],[240,'عبد الله','امغارن',D],
+[241,'عمر','مكني',D],[242,'عزیزة','امزیل',D],[243,'فاطمة','مكني',D],[244,'یوسف','كوفي',D],
+[245,'حنان','امغارن',D],[246,'سمیة','امداح',D],[247,'المهدي','ایت احمد',D],[248,'طارق','واحي',D],
+[249,'رشیدة','قودي',D],[250,'اسماعیل','بعفاس',D],[251,'محمد','امغارن',D],[252,'محمد','المنصوري',D],
+[253,'حنان','حسنات',D],[254,'نور الدین','اتاي',D],[255,'احمد','بوالعوان',D],[256,'سكینة','جلماسي',D],
+[257,'محمد','احبیبي',D],[258,'عزیزة','بیضار',D],[259,'حبیبة','سملالى',M],[260,'مریم','معمي',D],
+[261,'مریم','السملالي',D],[262,'عمر','الزكاني',D],[263,'معاد','معمي',D],[264,'عبد الحمید','بالرائیس',D],
+[265,'محمد','معمي',D],[266,'عبد الرزاق','ایت احي',D],[267,'السعدیة','قودي',D],[268,'لحسن','فسكا',D],
+[269,'محمد','مكني',D],[270,'محمد','كزاي',D],[271,'عبد الجلیل','الشافعي',D],[272,'عبد الفتاح','موكني',D],
+[273,'زهرة','حسنات',D],[274,'فاطمة','ایت الفاطمي',D],[275,'سكینة','امغارن',D],[276,'هشام','امغارن',D],
+[277,'اشرف','فسكا',D],[278,'هشام','امداح',D],[279,'حسن','امداح',D],[280,'بهیجة','ایت زلیم',D],
+[281,'خدیجة','حسنات',D],[282,'الحسین','امداح',D],[283,'فاطمة','المنصوري',D],[284,'یسرى','واحي',D],
+[285,'مریم','المودن',D],[286,'عبد الغني','ابرشیح',D],[287,'عبد الحمید','ابرشیح',D],[288,'فاطنة','الحاجي',S],
+[289,'حبیبة','واحي',D],[290,'عبد الرحیم','بعفاس',D],[291,'یوسف','فروضي',D],[292,'سكینة','بن خالي',D],
+[293,'فاطمة','ایت سعید',D],[294,'نبیل','منیسي',D],[295,'اسماعیل','فروضي',D],[296,'زینب','العلاوي',D],
+[297,'عمر','بوشتراط',D],[298,'سلیمان','تاموشي',D],[299,'جواد','المودن',D],[300,'بدرالدین','العلاوي',D],
+[301,'نعیمة','بعفاس',D],[302,'محمد','امغارن',D],[303,'مروان','دامو',D],[304,'خدیجة','ایت ایجة',D],
+[305,'یونس','منیسي',D],[306,'لقمان','اتاي',D],[307,'ابراهیم','اللجومي',D],[308,'عبد العالي','بن خالي',D],
+[309,'محمد','باجو',D],[310,'ابراهیم','حسنات',D],[311,'رجاء','بواشتراط',D],[312,'امین','امغارن',D],
+[313,'مریم','الطالبي',D],[314,'محمد','بوالعوان',D],[315,'فاطمة الزهراء','بوشطرات',D],[316,'لمیاء','ایت زلیم',D],
+[317,'ایمان','امغارن',D],[318,'كمال','بیضار',D],[319,'فاطمة','الزیتوني',D],[320,'سعیدة','بن الطالب',D],
+[321,'نهیلة','باجو',D],[322,'حمزة','ابرشیح',D],[323,'السعید','واحي',D],[324,'زینبة','عاقل',D],
+[325,'شیماء','بن الفقیه',D],[326,'سمیر','تلیماز',D],[327,'نعیمة','اوتزكي',D],[328,'حمید','موح',D],
+[329,'عبد الرحمان','لجومي',D],[330,'سكینة','القرشي',D],[331,'رضیة','امزیلان',D],[332,'نبیلة','واحي',D],
+[333,'كلتوم','مكني',D],[334,'الحسین','بعاید',D],[335,'محمد','حسنات',D],[336,'كبیرة','امروك',D],
+[337,'نعیمة','الباش',D],[338,'عصام','ایت احمد',D],[339,'محمد','موكني',D],[340,'محمد','المنصوري',D],
+[341,'عبد اللطیف','الشافعي',D],[342,'اسماعیل','حسنات',D],[343,'محمد','ایت بلقاس',D],[344,'ابراهیم','بن الطالب',D],
+[345,'لحسن','بالرائیس',D],[346,'عائشة','بوشطرات',D],[347,'فاضمة','بن الطالب',D],[348,'كبیرة','ازناك',D],
+[349,'حسن','موكني',D],[350,'عبد الرحمان','فروضي',D],[351,'العرابي','ایت سعید',D],[352,'لحسن','السملالي',D],
+[353,'مباركة','بویروكوتن',D],[354,'محمد','بواشتراط',D],[355,'محمد','امرووك',D],[356,'بهیجة','زاوطي',D],
+[357,'عبدالله','حسنات',D],[358,'حفیظة','السعداني',D],[359,'خدیجة','السعداني',D],[360,'عبدالرحمان','منیسي',D],
+[361,'الحسن','ایت بالحسن',D],[362,'عبدالله','القرشي',D],[363,'محمد','ایت بالحسن',D],[364,'محمد','ایت زلیم',D],
+[365,'محمد','الشافعي',D],[366,'لحسن','امغارن',D],[367,'امیمة','امغارن',D],[368,'خالد','حسنات',D],
+[369,'عائشة','اكن',D],[370,'فاتحة','نایت علي',D],[371,'رضیة','ایت علي احمد',D],[372,'محمد','قودي',D],
+[373,'لحسن','امزیل',D],[374,'ابراهیم','واهي',D],[375,'لحسن','القرشي',D],[376,'محمد بن ع الواحد','ازناك',D],
+[377,'محمد','عاقل',D],[378,'عبد الرحمان','مكني',D],[379,'عبد الله','واحي',D],[380,'محمد','القرشي',D],
+[381,'المداني','سملالي',D],[382,'محمد','منسي',D],[383,'محمد','اتاي',D],[384,'الزهرة','الحسناوي',D],
+[385,'عبد المومن','كوفي',X],[386,'صابر','لدومي',D],[387,'حنان','الدحماني',D],[388,'محمد','ایت سعید',D],
+[389,'محمد','بن خالي',D],[390,'الحسین','ایت بوجمعة',D],[391,'محمد','بوشطرات',D],[392,'ابراهیم','معمي',D],
+[393,'محمد','بوالعوان',D],[394,'الحسین','موكني',D],[395,'محمد','ایت السعید',D],[396,'امبارك','ایت عمر',D],
+[397,'احمد','امروك',D],[398,'محمد','مكني',D],[399,'محمد','موح',D],[400,'نوال','ایت زلیم',D],
+[401,'سعید','بوخو',D],[402,'الحسین','امغارن',D],[403,'اسماعیل','امغارن',D],[404,'فاضمة','كوفي',X],
+[405,'عبداللطیف','الباش',D],[406,'فاطمة','بوشطرات',D],[407,'الحسن','القرشي',D],[408,'فضمة','جبور',D],
+[409,'نعیمة','الطالبي',D],[410,'عائشة','زاف',D],[411,'فاضمة','بواكال',D],[412,'فاضمة','موح',D],
+[413,'سفیان','موكني',D],[414,'علي','بوشطرات',D],[415,'الحسان','بیقبان',D],[416,'جواد','الزیتوني',D],
+[417,'فاطمة','ایت احمد',D],[418,'حیاة','الزكاني',D],[419,'مصطفى','مشواض',D],[420,'مریم','القرشي',D],
+[421,'خدیجة','ایت حمد',D],[422,'كبیرة','معمي',D],[423,'زهرة','فسكا',D],[424,'عبد الرحیم','حسنات',D],
+[425,'محمد','اسملالي',D],[426,'ربیعة','بنبلخیر',D],[427,'كلتومة','تنوت',D],[428,'فاطمة','كاني',D],
+[429,'فاضمة بنت عمر','امداح',D],[430,'عبد العالي','ایت زلیم',D],[431,'فاطمة','واحي',D],[432,'زبیدة','لجومي',D],
+[433,'حبیبة','بوحویلي',M],[434,'خدیجة','بیضار',D],[435,'محمد','القرشي',D],[436,'اسماعیل','معمي',D],
+[437,'محمد','الشافعي',D],[438,'لحسن','الشافعي',D],[439,'رشیدة','مكني',D],[440,'توفیق','واحي',D],
+[441,'فاطمة','ایت القائد',D],[442,'محمد','القرشي',D],[443,'عبد الوهاب','ایت سعید',D],[444,'فاضمة بنت احمد','حسنات',D],
+[445,'ملیدة','ند بركا',D],[446,'العربي','الحاجي',D],[447,'مدیحة','موكني',D]
+];
+
+const STORAGE_KEY='oukum_campaign_v1';
+
+createApp({
+  setup(){
+    const saved=localStorage.getItem(STORAGE_KEY);
+    const initVoters=saved?JSON.parse(saved):RAW.map(r=>({id:r[0],fn:r[1],ln:r[2],douar:r[3],position:'',treatment:''}));
+    const voters=ref(initVoters);
+    const tab=ref('dash');
+    const search=ref('');
+    const fDouar=ref('');
+    const fPos=ref('');
+    const page=ref(1);
+    const PER=30;
+
+    function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(voters.value));}
+
+    function setPos(id,pos){
+      const v=voters.value.find(x=>x.id===id);
+      if(v){v.position=v.position===pos?'':pos;save();}
+    }
+
+    function tabClass(t){
+      return t===tab.value
+        ?'px-5 py-3 text-sm font-medium border-b-2 border-blue-600 text-blue-600'
+        :'px-5 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700';
+    }
+
+    const filtered=computed(()=>{
+      let r=voters.value;
+      const q=search.value.trim();
+      if(q){const ql=q.toLowerCase();r=r.filter(v=>(v.fn+' '+v.ln).toLowerCase().includes(ql));}
+      if(fDouar.value)r=r.filter(v=>v.douar===fDouar.value);
+      if(fPos.value==='none')r=r.filter(v=>!v.position);
+      else if(fPos.value)r=r.filter(v=>v.position===fPos.value);
+      return r;
+    });
+
+    watch([search,fDouar,fPos],()=>{page.value=1;});
+
+    const totalPages=computed(()=>Math.max(1,Math.ceil(filtered.value.length/PER)));
+    const paginated=computed(()=>{const s=(page.value-1)*PER;return filtered.value.slice(s,s+PER);});
+
+    const douarList=computed(()=>[...new Set(voters.value.map(v=>v.douar))].sort());
+
+    const stats=computed(()=>{
+      const total=voters.value.length;
+      const maana=voters.value.filter(v=>v.position==='maana').length;
+      const mutaraddid=voters.value.filter(v=>v.position==='mutaraddid').length;
+      const diddana=voters.value.filter(v=>v.position==='diddana').length;
+      const notEval=voters.value.filter(v=>!v.position).length;
+      const p=n=>Math.round(n/total*100);
+      return{maana,mutaraddid,diddana,notEval,pMaana:p(maana),pMutaraddid:p(mutaraddid),pDiddana:p(diddana),pNotEval:p(notEval)};
+    });
+
+    const douarStats=computed(()=>{
+      const m={};
+      voters.value.forEach(v=>{
+        if(!m[v.douar])m[v.douar]={name:v.douar,total:0,maana:0,mutaraddid:0,diddana:0,notEval:0};
+        m[v.douar].total++;
+        if(v.position==='maana')m[v.douar].maana++;
+        else if(v.position==='mutaraddid')m[v.douar].mutaraddid++;
+        else if(v.position==='diddana')m[v.douar].diddana++;
+        else m[v.douar].notEval++;
+      });
+      return Object.values(m).sort((a,b)=>b.total-a.total);
+    });
+
+    const treatStats=computed(()=>{
+      const c=[0,0,0];
+      voters.value.forEach(v=>{if(v.treatment==='v1')c[0]++;else if(v.treatment==='v2')c[1]++;else if(v.treatment==='v3')c[2]++;});
+      return [{count:c[0]},{count:c[1]},{count:c[2]}];
+    });
+
+    function rowBg(p){return p==='maana'?'bg-green-50':p==='mutaraddid'?'bg-yellow-50':p==='diddana'?'bg-red-50':'';}
+    function cardBorder(p){return p==='maana'?'border-green-500':p==='mutaraddid'?'border-yellow-400':p==='diddana'?'border-red-500':'border-gray-200';}
+    function badgeCls(p){return p==='maana'?'bg-green-100 text-green-700':p==='mutaraddid'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700';}
+    function posLabel(p){return p==='maana'?'✅ معنا':p==='mutaraddid'?'⚠️ متردد':'❌ ضدنا';}
+    function resetF(){search.value='';fDouar.value='';fPos.value='';}
+
+    return{voters,tab,search,fDouar,fPos,page,totalPages,paginated,filtered,douarList,stats,douarStats,treatStats,save,setPos,tabClass,rowBg,cardBorder,badgeCls,posLabel,resetF};
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

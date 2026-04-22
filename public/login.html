@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تسجيل الدخول — جماعة الوكوم</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Cairo', sans-serif; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f0f0f 0%, #1c1c1c 50%, #2d0a16 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .inp {
+      width: 100%; border: 2px solid #be123c44; border-radius: .75rem;
+      padding: .7rem 1rem; outline: none; font-size: .95rem; font-weight: 600;
+      transition: border-color .15s; direction: rtl;
+      background: #2a2a2a; color: #fff;
+    }
+    .inp::placeholder { color: #6b7280; }
+    .inp:focus { border-color: #be123c; box-shadow: 0 0 0 3px #be123c22; }
+    .btn-login {
+      width: 100%; background: linear-gradient(135deg, #9f1239, #be123c);
+      color: #fff; border-radius: .75rem; font-weight: 900; font-size: 1rem;
+      padding: .8rem; transition: all .15s; border: none; cursor: pointer;
+      box-shadow: 0 4px 20px #be123c44;
+    }
+    .btn-login:hover { background: linear-gradient(135deg, #be123c, #e11d48); transform: translateY(-1px); box-shadow: 0 6px 24px #be123c66; }
+    .btn-login:active { transform: translateY(0); }
+    .card {
+      background: linear-gradient(160deg, #1a1a1a 0%, #222 100%);
+      border-radius: 1.5rem;
+      border: 1px solid #be123c33;
+      box-shadow: 0 25px 60px rgba(0,0,0,.6), 0 0 0 1px #be123c11;
+    }
+    .err {
+      background: #450a0a; border: 1px solid #dc2626; color: #fca5a5;
+      border-radius: .75rem; padding: .7rem 1rem; font-size: .875rem;
+      font-weight: 700; text-align: center; display: none;
+    }
+    .err.show { display: block; }
+    @keyframes shake {
+      0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)}
+    }
+    .shake { animation: shake .4s ease; }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .fade-up { animation: fadeUp .5s ease forwards; }
+    /* Particles */
+    .dot { position:fixed; border-radius:50%; opacity:.15; pointer-events:none; }
+  </style>
+</head>
+<body>
+
+<!-- Decorative dots -->
+<div class="dot w-64 h-64 bg-rose-900" style="top:-80px;right:-80px"></div>
+<div class="dot w-48 h-48 bg-rose-800" style="bottom:-60px;left:-60px"></div>
+<div class="dot w-32 h-32 bg-rose-700" style="top:40%;left:10%"></div>
+
+<div class="w-full max-w-sm mx-4 fade-up">
+
+  <!-- Logo area -->
+  <div class="text-center mb-6">
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Logo_-_Parti_de_l%27Istiqlal.png/120px-Logo_-_Parti_de_l%27Istiqlal.png"
+      alt="حزب الاستقلال"
+      class="w-20 h-20 object-contain rounded-full bg-white p-2 mx-auto shadow-2xl border-4"
+      style="border-color:#be123c"
+    />
+    <h1 class="text-white font-black text-xl mt-3 leading-tight">حزب الاستقلال</h1>
+    <p class="text-sm mt-1" style="color:#fda4af">جماعة الوكوم — إقليم طاطا</p>
+  </div>
+
+  <!-- Card -->
+  <div class="card p-7">
+    <h2 class="text-white font-black text-lg text-center mb-6">
+      🔐 تسجيل الدخول
+    </h2>
+
+    <div id="errMsg" class="err mb-4">❌ اسم المستخدم أو كلمة المرور غير صحيحة</div>
+
+    <form id="loginForm" onsubmit="doLogin(event)" class="space-y-4">
+      <div>
+        <label class="block text-sm font-black mb-1.5" style="color:#fda4af">👤 اسم المستخدم</label>
+        <input id="username" type="text" class="inp" placeholder="أدخل اسم المستخدم"
+          autocomplete="username" autocapitalize="none" spellcheck="false" />
+      </div>
+      <div>
+        <label class="block text-sm font-black mb-1.5" style="color:#fda4af">🔑 كلمة المرور</label>
+        <div class="relative">
+          <input id="password" type="password" class="inp" placeholder="أدخل كلمة المرور"
+            autocomplete="current-password" style="padding-left:2.5rem" />
+          <button type="button" onclick="togglePwd()" tabindex="-1"
+            class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-sm select-none">
+            👁️
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn-login mt-2" id="submitBtn">
+        دخول ←
+      </button>
+    </form>
+  </div>
+
+  <p class="text-center text-xs mt-5" style="color:#4b5563">
+    حزب الاستقلال © 2026 &nbsp;|&nbsp; نظام إدارة قوائم الناخبين
+  </p>
+</div>
+
+<script>
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const err = document.getElementById('errMsg');
+  const u   = document.getElementById('username').value.trim();
+  const p   = document.getElementById('password').value;
+
+  if (!u || !p) {
+    err.textContent = '⚠️ الرجاء إدخال اسم المستخدم وكلمة المرور';
+    err.classList.add('show');
+    return;
+  }
+
+  btn.textContent = '⏳ جارٍ التحقق...';
+  btn.disabled = true;
+  err.classList.remove('show');
+
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    if (r.ok) {
+      btn.textContent = '✅ جارٍ التوجيه...';
+      window.location.href = '/';
+    } else {
+      const data = await r.json().catch(() => ({}));
+      err.textContent = '❌ ' + (data.error || 'اسم المستخدم أو كلمة المرور غير صحيحة');
+      err.classList.add('show');
+      document.getElementById('loginForm').classList.add('shake');
+      setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 400);
+      btn.textContent = 'دخول ←';
+      btn.disabled = false;
+      document.getElementById('password').value = '';
+      document.getElementById('password').focus();
+    }
+  } catch {
+    err.textContent = '❌ خطأ في الاتصال بالخادم';
+    err.classList.add('show');
+    btn.textContent = 'دخول ←';
+    btn.disabled = false;
+  }
+}
+
+function togglePwd() {
+  const f = document.getElementById('password');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+
+// Auto-focus username
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('username').focus();
+});
+</script>
+</body>
+</html>
