@@ -161,6 +161,11 @@ async function loadDashboard() {
         <div class="text-2xl">🏆</div>
         <div class="text-lg font-black" style="color:#78350f">فائز! معنا في المقدمة</div>
         <div class="text-xs font-bold mt-1" style="color:#92400e">معنا (${s.maana}) أكثر من متردد + ضدنا (${s.mutaraddid + s.diddana})</div>
+      </div>` : s.maana > 0 || s.mutaraddid > 0 || s.diddana > 0 ? `
+      <div class="loser-banner rounded-2xl p-3 text-center mb-3 fade-in">
+        <div class="text-2xl">❌</div>
+        <div class="text-lg font-black" style="color:#7f1d1d">خاسر! معنا في المؤخرة</div>
+        <div class="text-xs font-bold mt-1" style="color:#991b1b">معنا (${s.maana}) أقل من متردد + ضدنا (${s.mutaraddid + s.diddana})</div>
       </div>` : ''}
       <div class="flex h-5 rounded-full overflow-hidden bg-gray-100">
         ${s.maana      ? `<div style="width:${Math.round(s.maana/s.voters*100)}%;background:#059669" class="flex items-center justify-center text-white text-xs font-bold">${Math.round(s.maana/s.voters*100)}%</div>` : ''}
@@ -605,6 +610,11 @@ async function loadCampaign(search='', position='', douarId='') {
       <div class="text-3xl mb-1">🏆</div>
       <div class="text-xl font-black" style="color:#78350f">فائز! معنا في المقدمة</div>
       <div class="text-sm font-bold mt-1" style="color:#92400e">معنا (${s.maana}) أكثر من متردد + ضدنا (${s.mutaraddid + s.diddana})</div>
+    </div>` : s.maana > 0 || s.mutaraddid > 0 || s.diddana > 0 ? `
+    <div class="loser-banner rounded-2xl p-4 text-center mb-4 fade-in">
+      <div class="text-3xl mb-1">❌</div>
+      <div class="text-xl font-black" style="color:#7f1d1d">خاسر! معنا في المؤخرة</div>
+      <div class="text-sm font-bold mt-1" style="color:#991b1b">معنا (${s.maana}) أقل من متردد + ضدنا (${s.mutaraddid + s.diddana})</div>
     </div>` : ''}
 
     <!-- Progress bar -->
