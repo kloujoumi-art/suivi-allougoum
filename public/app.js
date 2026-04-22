@@ -26,6 +26,7 @@ function navigate(page) {
   document.querySelectorAll('[id^="page-"]').forEach(p => p.classList.add('hidden'));
   document.getElementById(`page-${page}`)?.classList.remove('hidden');
   document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.page === page));
+  document.querySelectorAll('.bot-btn').forEach(b => b.classList.toggle('active', b.dataset.page === page));
   if (page === 'dashboard') loadDashboard();
   else if (page === 'voters')    loadVoters();
   else if (page === 'districts') loadDistricts();
@@ -78,53 +79,70 @@ async function loadDashboard() {
   const c = document.getElementById('page-dashboard');
   c.innerHTML = `<div class="text-center py-16 text-rose-300 text-xl animate-pulse">⏳ جارٍ التحميل...</div>`;
   const s = await api('/api/stats');
+  const pctV = n => s.voters > 0 ? Math.round(n / s.voters * 100) : 0;
+  const isWinning = s.maana > (s.mutaraddid + s.diddana) && s.maana > 0;
+  const hasData   = s.maana > 0 || s.mutaraddid > 0 || s.diddana > 0;
   c.innerHTML = `
-    <!-- Welcome -->
-    <div class="card p-4 md:p-6 mb-4 md:mb-6 flex items-center gap-3 md:gap-5" style="border-right:5px solid #be123c">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Logo_-_Parti_de_l%27Istiqlal.png/120px-Logo_-_Parti_de_l%27Istiqlal.png"
-        class="w-14 h-14 md:w-20 md:h-20 object-contain rounded-full bg-white p-1 shadow border-2 flex-shrink-0"
-        style="border-color:#be123c" />
-      <div class="min-w-0">
-        <h2 class="text-lg md:text-2xl font-black truncate" style="color:#0f0f0f">جماعة الوكوم — قائمة الناخبين</h2>
-        <p class="text-gray-400 text-xs md:text-sm">حزب الاستقلال &nbsp;|&nbsp; إقليم طاطا &nbsp;|&nbsp; المملكة المغربية</p>
+
+    <!-- Winner / Loser Banner -->
+    ${hasData ? `
+    <div class="${isWinning ? 'winner-banner' : 'loser-banner'} rounded-2xl p-3 md:p-4 text-center mb-4 fade-in flex items-center justify-center gap-3">
+      <div class="text-3xl md:text-4xl">${isWinning ? '🏆' : '❌'}</div>
+      <div>
+        <div class="text-base md:text-xl font-black" style="color:${isWinning ? '#78350f' : '#7f1d1d'}">${isWinning ? 'فائز! معنا في المقدمة' : 'خاسر! معنا في المؤخرة'}</div>
+        <div class="text-xs font-bold mt-0.5" style="color:${isWinning ? '#92400e' : '#991b1b'}">معنا ${s.maana} | متردد+ضدنا ${s.mutaraddid + s.diddana}</div>
+      </div>
+    </div>` : ''}
+
+    <!-- Stat cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 mb-4">
+      <div class="rounded-2xl p-3 md:p-5 text-white shadow-lg cursor-pointer hover:opacity-90 transition fade-in"
+           style="background:linear-gradient(135deg,#9f1239,#be123c)" onclick="navigate('voters')">
+        <div class="text-xl md:text-3xl mb-0.5">🗳️</div>
+        <div class="text-3xl md:text-4xl font-black">${s.voters}</div>
+        <div class="text-xs opacity-80 mt-0.5">ناخب مسجّل</div>
+      </div>
+      <div class="rounded-2xl p-3 md:p-5 text-white shadow-lg fade-in" style="background:linear-gradient(135deg,#d1fae5,#6ee7b7)">
+        <div class="text-xl md:text-3xl mb-0.5">✅</div>
+        <div class="text-3xl md:text-4xl font-black text-green-800">${s.maana}</div>
+        <div class="text-xs text-green-700 mt-0.5 font-bold">معنا — ${pctV(s.maana)}%</div>
+      </div>
+      <div class="rounded-2xl p-3 md:p-5 text-white shadow-lg fade-in" style="background:linear-gradient(135deg,#fef3c7,#fcd34d)">
+        <div class="text-xl md:text-3xl mb-0.5">⚠️</div>
+        <div class="text-3xl md:text-4xl font-black text-yellow-800">${s.mutaraddid}</div>
+        <div class="text-xs text-yellow-700 mt-0.5 font-bold">متردد — ${pctV(s.mutaraddid)}%</div>
+      </div>
+      <div class="rounded-2xl p-3 md:p-5 text-white shadow-lg fade-in" style="background:linear-gradient(135deg,#fee2e2,#fca5a5)">
+        <div class="text-xl md:text-3xl mb-0.5">❌</div>
+        <div class="text-3xl md:text-4xl font-black text-red-800">${s.diddana}</div>
+        <div class="text-xs text-red-700 mt-0.5 font-bold">ضدنا — ${pctV(s.diddana)}%</div>
       </div>
     </div>
 
-    <!-- Stat cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-5 md:mb-7">
-      <div class="rounded-2xl p-4 md:p-5 text-white shadow-lg cursor-pointer hover:opacity-90 transition fade-in"
-           style="background:linear-gradient(135deg,#9f1239,#be123c)" onclick="navigate('voters')">
-        <div class="text-2xl md:text-3xl mb-1">🗳️</div><div class="text-3xl md:text-4xl font-black">${s.voters}</div>
-        <div class="text-xs md:text-sm opacity-80 mt-1">ناخب مسجّل</div>
+    <!-- Progress bar -->
+    <div class="card p-3 md:p-4 mb-4">
+      <div class="flex justify-between text-xs text-gray-500 mb-1">
+        <span class="font-bold">توزيع المواقف</span>
+        <span class="font-bold" style="color:#be123c">${s.voters - s.maana - s.mutaraddid - s.diddana} لم يُقيَّم</span>
       </div>
-      <div class="rounded-2xl p-4 md:p-5 text-white shadow-lg cursor-pointer hover:opacity-90 transition fade-in"
-           style="background:linear-gradient(135deg,#0f0f0f,#374151)" onclick="navigate('districts')">
-        <div class="text-2xl md:text-3xl mb-1">🗺️</div><div class="text-3xl md:text-4xl font-black">${s.districts}</div>
-        <div class="text-xs md:text-sm opacity-80 mt-1">دائرة انتخابية</div>
-      </div>
-      <div class="rounded-2xl p-4 md:p-5 text-white shadow-lg fade-in"
-           style="background:linear-gradient(135deg,#be185d,#ec4899)">
-        <div class="text-2xl md:text-3xl mb-1">🏡</div><div class="text-3xl md:text-4xl font-black">${s.douars}</div>
-        <div class="text-xs md:text-sm opacity-80 mt-1">دوار</div>
-      </div>
-      <div class="rounded-2xl p-4 md:p-5 text-white shadow-lg fade-in"
-           style="background:linear-gradient(135deg,#1a1a1a,#374151)">
-        <div class="text-2xl md:text-3xl mb-1">🏘️</div><div class="text-3xl md:text-4xl font-black">${s.municipalities}</div>
-        <div class="text-xs md:text-sm opacity-80 mt-1">جماعة</div>
+      <div class="flex h-5 rounded-full overflow-hidden bg-gray-100">
+        ${s.maana      ? `<div style="width:${pctV(s.maana)}%;background:#059669"     class="flex items-center justify-center text-white text-xs font-bold">${pctV(s.maana) > 5 ? pctV(s.maana)+'%' : ''}</div>` : ''}
+        ${s.mutaraddid ? `<div style="width:${pctV(s.mutaraddid)}%;background:#d97706" class="flex items-center justify-center text-white text-xs font-bold">${pctV(s.mutaraddid) > 5 ? pctV(s.mutaraddid)+'%' : ''}</div>` : ''}
+        ${s.diddana    ? `<div style="width:${pctV(s.diddana)}%;background:#dc2626"    class="flex items-center justify-center text-white text-xs font-bold">${pctV(s.diddana) > 5 ? pctV(s.diddana)+'%' : ''}</div>` : ''}
       </div>
     </div>
 
     <!-- Districts breakdown -->
-    <div class="card p-5 mb-6">
-      <h3 class="font-black text-lg mb-4" style="color:#9f1239">🗺️ توزيع الناخبين حسب الدائرة</h3>
-      <div class="space-y-4">
+    <div class="card p-3 md:p-5 mb-4">
+      <h3 class="font-black text-base md:text-lg mb-3" style="color:#9f1239">🗺️ توزيع الناخبين حسب الدائرة</h3>
+      <div class="space-y-3">
         ${s.byDistrict.map(d => `
           <div class="cursor-pointer" onclick="navigate('voters');setTimeout(()=>loadVoters('',${d.id||''}),50)">
             <div class="flex justify-between mb-1">
-              <span class="font-bold text-gray-800">الدائرة ${d.number}</span>
-              <span class="font-black" style="color:#be123c">${d.voter_count} ناخب</span>
+              <span class="font-bold text-gray-800 text-sm">الدائرة ${d.number}</span>
+              <span class="font-black text-sm" style="color:#be123c">${d.voter_count} ناخب</span>
             </div>
-            <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
               <div class="bar" style="width:${s.voters>0?Math.round(d.voter_count/s.voters*100):0}%"></div>
             </div>
           </div>
@@ -132,58 +150,14 @@ async function loadDashboard() {
       </div>
     </div>
 
-    <!-- Campaign mini-stats -->
-    <div class="card p-5 mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-black text-lg" style="color:#9f1239">🎯 إحصائيات الحملة</h3>
-        <button onclick="navigate('campaign')" class="btn-rose text-sm">التفاصيل الكاملة ←</button>
-      </div>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <div class="rounded-xl p-4 text-center" style="background:#d1fae5">
-          <div class="text-3xl font-black text-green-700">${s.maana}</div>
-          <div class="text-sm text-green-600 font-bold mt-1">✅ معنا 100%</div>
-        </div>
-        <div class="rounded-xl p-4 text-center" style="background:#fef3c7">
-          <div class="text-3xl font-black text-yellow-700">${s.mutaraddid}</div>
-          <div class="text-sm text-yellow-600 font-bold mt-1">⚠️ متردد 50%</div>
-        </div>
-        <div class="rounded-xl p-4 text-center" style="background:#fee2e2">
-          <div class="text-3xl font-black text-red-700">${s.diddana}</div>
-          <div class="text-sm text-red-600 font-bold mt-1">❌ ضدنا 0%</div>
-        </div>
-        <div class="rounded-xl p-4 text-center bg-gray-50">
-          <div class="text-3xl font-black text-gray-500">${s.voters - s.maana - s.mutaraddid - s.diddana}</div>
-          <div class="text-sm text-gray-400 font-bold mt-1">⏳ لم يُقيَّم</div>
-        </div>
-      </div>
-      ${s.maana > (s.mutaraddid + s.diddana) && s.maana > 0 ? `
-      <div class="winner-banner rounded-2xl p-3 text-center mb-3 fade-in">
-        <div class="text-2xl">🏆</div>
-        <div class="text-lg font-black" style="color:#78350f">فائز! معنا في المقدمة</div>
-        <div class="text-xs font-bold mt-1" style="color:#92400e">معنا (${s.maana}) أكثر من متردد + ضدنا (${s.mutaraddid + s.diddana})</div>
-      </div>` : s.maana > 0 || s.mutaraddid > 0 || s.diddana > 0 ? `
-      <div class="loser-banner rounded-2xl p-3 text-center mb-3 fade-in">
-        <div class="text-2xl">❌</div>
-        <div class="text-lg font-black" style="color:#7f1d1d">خاسر! معنا في المؤخرة</div>
-        <div class="text-xs font-bold mt-1" style="color:#991b1b">معنا (${s.maana}) أقل من متردد + ضدنا (${s.mutaraddid + s.diddana})</div>
-      </div>` : ''}
-      <div class="flex h-5 rounded-full overflow-hidden bg-gray-100">
-        ${s.maana      ? `<div style="width:${Math.round(s.maana/s.voters*100)}%;background:#059669" class="flex items-center justify-center text-white text-xs font-bold">${Math.round(s.maana/s.voters*100)}%</div>` : ''}
-        ${s.mutaraddid ? `<div style="width:${Math.round(s.mutaraddid/s.voters*100)}%;background:#d97706" class="flex items-center justify-center text-white text-xs font-bold">${Math.round(s.mutaraddid/s.voters*100)}%</div>` : ''}
-        ${s.diddana    ? `<div style="width:${Math.round(s.diddana/s.voters*100)}%;background:#dc2626" class="flex items-center justify-center text-white text-xs font-bold">${Math.round(s.diddana/s.voters*100)}%</div>` : ''}
-      </div>
-    </div>
-
     <!-- Quick actions -->
-    <div class="card p-5">
-      <h3 class="font-black text-lg mb-4" style="color:#9f1239">⚡ إجراءات سريعة</h3>
-      <div class="flex flex-wrap gap-3">
-        <button onclick="navigate('voters');setTimeout(()=>openAddModal('voter'),100)" class="btn-rose">+ إضافة ناخب</button>
-        <button onclick="navigate('districts');setTimeout(()=>openAddModal('district'),100)" class="btn-dark">+ إضافة دائرة</button>
-        <button onclick="navigate('campaign')" style="background:#059669" class="btn-rose">🎯 إدارة الحملة</button>
-        <div class="flex-1"></div>
-        <a href="/api/export/voters" class="btn-rose">📥 تصدير الناخبين</a>
-        <a href="/api/export/districts" class="btn-dark">📥 تصدير الدوائر</a>
+    <div class="card p-3 md:p-5">
+      <h3 class="font-black text-base md:text-lg mb-3" style="color:#9f1239">⚡ إجراءات سريعة</h3>
+      <div class="grid grid-cols-2 md:flex md:flex-wrap gap-2">
+        <button onclick="navigate('voters');setTimeout(()=>openAddModal('voter'),100)" class="btn-rose text-sm">+ إضافة ناخب</button>
+        <button onclick="navigate('campaign')" style="background:#059669" class="btn-rose text-sm">🎯 الحملة</button>
+        <a href="/api/export/voters" class="btn-dark text-sm text-center">📥 تصدير الناخبين</a>
+        <a href="/api/export/districts" class="btn-dark text-sm text-center">📥 تصدير الدوائر</a>
       </div>
     </div>
   `;
